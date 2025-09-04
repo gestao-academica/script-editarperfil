@@ -1,0 +1,120 @@
+function getUsuarios() {
+  return JSON.parse(localStorage.getItem("usuarios") || "[]");
+}
+
+function setUsuarios(usuarios) {
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+}
+
+function getUsuarioLogado() {
+  return JSON.parse(localStorage.getItem("usuarioLogado"));
+}
+
+function setUsuarioLogado(usuario) {
+  localStorage.setItem("usuarioLogado", JSON.stringify(usuario));
+}
+
+// Carregar dados no formulário
+document.addEventListener("DOMContentLoaded", () => {
+  const usuario = getUsuarioLogado();
+  if (!usuario) {
+    alert("Nenhum usuário logado!");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // Preencher os campos do formulário (ajuste conforme sua estrutura de dados)
+  document.getElementById("first-name").value = usuario.nome || "";
+  document.getElementById("last-name").value = usuario.sobrenome || "";
+  document.getElementById("username").value = usuario.username || "";
+  document.getElementById("email").value = usuario.email || "";
+  document.getElementById("personal_phone").value = usuario.telefonePessoal || "";
+  document.getElementById("work_phone").value = usuario.telefoneCorporativo || "";
+  document.getElementById("school_name").value = usuario.escola || "";
+
+  // Atualizar sidebar
+  document.querySelector(".user_name").textContent = usuario.nome || "Nome do Usuário";
+  document.querySelector(".profile_img").src = usuario.foto || "Imagens/profile_img.jpg";
+
+  // Configurar evento de logout
+  document.querySelector(".logout_button").addEventListener("click", logout);
+
+  // Salvar alterações do perfil
+  document.querySelector(".profile-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    salvarPerfil(usuario);
+  });
+
+  // Salvar alterações de senha
+  document.querySelector(".password-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    alterarSenha(usuario);
+  });
+});
+
+function salvarPerfil(usuario) {
+  const dadosAtualizados = {
+    nome: document.getElementById("first-name").value.trim(),
+    sobrenome: document.getElementById("last-name").value.trim(),
+    username: document.getElementById("username").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    telefonePessoal: document.getElementById("personal_phone").value.trim(),
+    telefoneCorporativo: document.getElementById("work_phone").value.trim(),
+    escola: document.getElementById("school_name").value.trim()
+  };
+
+  let usuarios = getUsuarios();
+  
+  usuarios = usuarios.map(u => {
+    if (u.id === usuario.id || u.email === usuario.email) {
+      return { ...u, ...dadosAtualizados };
+    }
+    return u;
+  });
+
+  setUsuarios(usuarios);
+  setUsuarioLogado({ ...usuario, ...dadosAtualizados });
+  
+  alert("Perfil atualizado com sucesso!");
+  document.querySelector(".user_name").textContent = dadosAtualizados.nome;
+}
+
+function alterarSenha(usuario) {
+  const senhaAntiga = document.getElementById("old-password").value;
+  const novaSenha = document.getElementById("password").value;
+  const confirmarSenha = document.getElementById("confirm-password").value;
+
+  if (senhaAntiga !== usuario.senha) {
+    alert("Senha antiga incorreta!");
+    return;
+  }
+
+  if (novaSenha !== confirmarSenha) {
+    alert("As novas senhas não coincidem!");
+    return;
+  }
+
+  let usuarios = getUsuarios();
+  
+  usuarios = usuarios.map(u => {
+    if (u.id === usuario.id || u.email === usuario.email) {
+      return { ...u, senha: novaSenha };
+    }
+    return u;
+  });
+
+  setUsuarios(usuarios);
+  setUsuarioLogado({ ...usuario, senha: novaSenha });
+
+  alert("Senha alterada com sucesso!");
+  
+  // Limpar campos
+  document.getElementById("old-password").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("confirm-password").value = "";
+}
+
+function logout() {
+  localStorage.removeItem("usuarioLogado");
+  window.location.href = "index.html";
+}
